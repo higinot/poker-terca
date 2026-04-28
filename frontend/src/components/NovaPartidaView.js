@@ -11,7 +11,7 @@ import {
 import { theme } from '../theme';
 import { matchService } from '../services/api';
 
-export default function NovaPartidaView({ userEmail }) {
+export default function NovaPartidaView({ userEmail, onSelectMatch }) {
   const [date, setDate] = useState('');
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -48,6 +48,7 @@ export default function NovaPartidaView({ userEmail }) {
         alert('Partida criada com sucesso!');
         setDate('');
         fetchMatches(); // Atualiza a lista
+        if (onSelectMatch) onSelectMatch(data.match.id); // Já abre a mesa criada
       } else {
         alert(data.message);
       }
@@ -63,7 +64,7 @@ export default function NovaPartidaView({ userEmail }) {
       const data = await matchService.join(matchId, userEmail);
       if (data.success) {
         alert('Você entrou na mesa!');
-        fetchMatches(); // Atualiza a lista para ver seu nome
+        if (onSelectMatch) onSelectMatch(matchId); // Já abre a mesa
       } else {
         alert(data.message);
       }
@@ -84,9 +85,12 @@ export default function NovaPartidaView({ userEmail }) {
         </View>
         
         {isPlayerInMatch ? (
-          <View style={styles.joinedBadge}>
-            <Text style={styles.joinedText}>Você está na mesa</Text>
-          </View>
+          <TouchableOpacity 
+            style={[styles.joinButton, { backgroundColor: theme.colors.primary }]}
+            onPress={() => onSelectMatch && onSelectMatch(item.id)}
+          >
+            <Text style={styles.joinButtonText}>Acessar Placar</Text>
+          </TouchableOpacity>
         ) : (
           <TouchableOpacity 
             style={styles.joinButton}

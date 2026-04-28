@@ -15,18 +15,30 @@ import { theme } from '../theme';
 import NovaPartidaView from '../components/NovaPartidaView';
 import RankingView from '../components/RankingView';
 import JogadoresView from '../components/JogadoresView';
+import PartidaDetalhesView from '../components/PartidaDetalhesView';
 
 export default function HomeScreen({ userEmail, onLogout }) {
   const { width } = useWindowDimensions();
   const isLargeScreen = width > 768;
   const [activeTab, setActiveTab] = useState('partida'); // 'partida', 'ranking', 'jogadores'
+  const [selectedMatchId, setSelectedMatchId] = useState(null);
 
   const renderContent = () => {
+    if (selectedMatchId) {
+      return (
+        <PartidaDetalhesView 
+          matchId={selectedMatchId} 
+          userEmail={userEmail} 
+          onBack={() => setSelectedMatchId(null)} 
+        />
+      );
+    }
+
     switch(activeTab) {
-      case 'partida': return <NovaPartidaView userEmail={userEmail} />;
+      case 'partida': return <NovaPartidaView userEmail={userEmail} onSelectMatch={setSelectedMatchId} />;
       case 'ranking': return <RankingView />;
       case 'jogadores': return <JogadoresView />;
-      default: return <NovaPartidaView userEmail={userEmail} />;
+      default: return <NovaPartidaView userEmail={userEmail} onSelectMatch={setSelectedMatchId} />;
     }
   };
 

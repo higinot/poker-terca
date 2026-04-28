@@ -52,6 +52,20 @@ export const matchService = {
       body: JSON.stringify({ userEmail })
     });
     return response.json();
+  },
+
+  getMatchDetails: async (matchId) => {
+    const response = await fetch(`${API_URL}/api/matches/${matchId}`);
+    return response.json();
+  },
+
+  submitResult: async (matchId, userEmail, cashResult) => {
+    const response = await fetch(`${API_URL}/api/matches/${matchId}/result`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userEmail, cashResult })
+    });
+    return response.json();
   }
 };
 

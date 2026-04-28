@@ -15,6 +15,7 @@ const createMatch = (req, res) => {
     status: 'OPEN',
     creator: creatorEmail,
     players: [creatorEmail], // O criador já entra na mesa automaticamente
+    results: {}, // Armazena { "email@teste.com": 150.50 }
     createdAt: new Date()
   };
 
@@ -43,10 +44,6 @@ const joinMatch = (req, res) => {
 
   const match = matches[matchIndex];
 
-  if (match.status !== 'OPEN') {
-    return res.status(400).json({ success: false, message: 'Esta partida já foi iniciada ou encerrada.' });
-  }
-
   if (match.players.includes(userEmail)) {
     return res.status(400).json({ success: false, message: 'Você já está nesta mesa!' });
   }
@@ -57,8 +54,42 @@ const joinMatch = (req, res) => {
   res.json({ success: true, message: 'Você entrou na partida com sucesso!', match });
 };
 
+const getMatchDetails = (req, res) => {
+  const matchId = parseInt(req.params.id);
+  const match = matches.find(m => m.id === matchId);
+
+  if (!match) {
+    return res.status(404).json({ success: false, message: 'Partida não encontrada.' });
+  }
+
+  res.json({ success: true, match });
+};
+
+const submitResult = (req, res) => {
+  const matchId = parseInt(req.params.id);
+  const { userEmail, cashResult } = req.body;
+
+  const matchIndex = matches.findIndex(m => m.id === matchId);
+  if (matchIndex === -1) {
+    return res.status(404).json({ success: false, message: 'Partida não encontrada.' });
+  }
+
+  const match = matches[matchIndex];
+
+  if (!match.players.includes(userEmail)) {
+    return res.status(400).json({ success: false, message: 'Você não faz parte desta partida.' });
+  }
+
+  // Registra o resultado em Cash Game (pode ser positivo ou negativo)
+  match.results[userEmail] = parseFloat(cashResult);
+
+  res.json({ success: true, message: 'Resultado salvo com sucesso!', match });
+};
+
 module.exports = {
   createMatch,
   listOpenMatches,
-  joinMatch
+  joinMatch,
+  getMatchDetails,
+  submitResult
 };

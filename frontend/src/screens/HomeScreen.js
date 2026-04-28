@@ -23,10 +23,10 @@ export default function HomeScreen({ userEmail, onLogout }) {
 
   const renderContent = () => {
     switch(activeTab) {
-      case 'partida': return <NovaPartidaView />;
+      case 'partida': return <NovaPartidaView userEmail={userEmail} />;
       case 'ranking': return <RankingView />;
       case 'jogadores': return <JogadoresView />;
-      default: return <NovaPartidaView />;
+      default: return <NovaPartidaView userEmail={userEmail} />;
     }
   };
 

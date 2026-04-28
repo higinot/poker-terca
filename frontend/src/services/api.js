@@ -29,3 +29,29 @@ export const authService = {
     return response.json();
   }
 };
+
+export const matchService = {
+  create: async (date, creatorEmail) => {
+    const response = await fetch(`${API_URL}/api/matches`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date, creatorEmail })
+    });
+    return response.json();
+  },
+  
+  getOpenMatches: async () => {
+    const response = await fetch(`${API_URL}/api/matches/open`);
+    return response.json();
+  },
+
+  join: async (matchId, userEmail) => {
+    const response = await fetch(`${API_URL}/api/matches/${matchId}/join`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userEmail })
+    });
+    return response.json();
+  }
+};
+

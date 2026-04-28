@@ -19,12 +19,11 @@ export default function App() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Lógica para detectar a URL da API automaticamente no Codespaces
   const getApiUrl = () => {
     const defaultUrl = 'http://localhost:5000';
     if (typeof window !== 'undefined' && window.location.hostname.includes('github.dev')) {
-      // Substitui qualquer porta (como -8081, -8082) por -5000 no link do Codespaces
-      return `https://${window.location.hostname.replace(/-\d+/, '-5000')}`;
+      // Garante que só vai trocar a porta no final do link (antes do .app.github.dev)
+      return `https://${window.location.hostname.replace(/-\d+\.app\.github\.dev/, '-5000.app.github.dev')}`;
     }
     return defaultUrl;
   };

@@ -19,12 +19,23 @@ export default function App() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Lógica para detectar a URL da API automaticamente no Codespaces
+  const getApiUrl = () => {
+    const defaultUrl = 'http://localhost:5000';
+    if (typeof window !== 'undefined' && window.location.hostname.includes('github.dev')) {
+      // Se estiver no Codespaces, troca a porta 8081 pela 5000 no link
+      return `https://${window.location.hostname.replace('8081', '5000')}`;
+    }
+    return defaultUrl;
+  };
+
+  const API_URL = getApiUrl();
   const isLargeScreen = width > 768;
 
   const handleLogin = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/login', {
+      const response = await fetch(`${API_URL}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -45,7 +56,7 @@ export default function App() {
   const handleRegister = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/register', {
+      const response = await fetch(`${API_URL}/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })

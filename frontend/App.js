@@ -23,8 +23,8 @@ export default function App() {
   const getApiUrl = () => {
     const defaultUrl = 'http://localhost:5000';
     if (typeof window !== 'undefined' && window.location.hostname.includes('github.dev')) {
-      // Se estiver no Codespaces, troca a porta 8081 pela 5000 no link
-      return `https://${window.location.hostname.replace('8081', '5000')}`;
+      // Substitui qualquer porta (como -8081, -8082) por -5000 no link do Codespaces
+      return `https://${window.location.hostname.replace(/-\d+/, '-5000')}`;
     }
     return defaultUrl;
   };

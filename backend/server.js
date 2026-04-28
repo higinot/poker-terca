@@ -16,6 +16,26 @@ app.get('/api/status', (req, res) => {
   });
 });
 
+// Rotas de Autenticação (Simuladas)
+app.post('/api/login', (req, res) => {
+  const { email, password } = req.body;
+  console.log('Tentativa de login:', email);
+  
+  // Simulação de sucesso
+  if (email && password) {
+    res.json({ success: true, message: 'Login realizado com sucesso!', user: { email } });
+  } else {
+    res.status(400).json({ success: false, message: 'E-mail e senha são obrigatórios.' });
+  }
+});
+
+app.post('/api/register', (req, res) => {
+  const { email, password } = req.body;
+  console.log('Novo cadastro:', email);
+  
+  res.json({ success: true, message: 'Usuário cadastrado com sucesso!' });
+});
+
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });

@@ -1,72 +1,99 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   StyleSheet, 
   Text, 
   View, 
   SafeAreaView, 
   TouchableOpacity, 
-  ScrollView, 
-  useWindowDimensions 
+  useWindowDimensions,
+  ScrollView
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { theme } from '../theme';
 
-// Para simplificar, vou extrair a URL aqui também (depois podemos colocar num context/util)
-const getApiUrl = () => {
-  const defaultUrl = 'http://localhost:5000';
-  if (typeof window !== 'undefined' && window.location.hostname.includes('github.dev')) {
-    return `https://${window.location.hostname.replace(/-\d+\.app\.github\.dev/, '-5000.app.github.dev')}`;
-  }
-  return defaultUrl;
-};
-const API_URL = getApiUrl();
+// Importando as views filhas
+import NovaPartidaView from '../components/NovaPartidaView';
+import RankingView from '../components/RankingView';
+import JogadoresView from '../components/JogadoresView';
 
 export default function HomeScreen({ userEmail, onLogout }) {
   const { width } = useWindowDimensions();
-  const [status, setStatus] = useState('Conectando ao backend...');
   const isLargeScreen = width > 768;
+  const [activeTab, setActiveTab] = useState('partida'); // 'partida', 'ranking', 'jogadores'
 
-  useEffect(() => {
-    fetch(`${API_URL}/api/status`)
-      .then(res => res.json())
-      .then(data => setStatus(data.message))
-      .catch(err => setStatus('Erro ao conectar com o backend ❌'));
-  }, []);
+  const renderContent = () => {
+    switch(activeTab) {
+      case 'partida': return <NovaPartidaView />;
+      case 'ranking': return <RankingView />;
+      case 'jogadores': return <JogadoresView />;
+      default: return <NovaPartidaView />;
+    }
+  };
+
+  const NavItem = ({ id, icon, label }) => {
+    const isActive = activeTab === id;
+    return (
+      <TouchableOpacity 
+        style={[styles.navItem, isActive && styles.navItemActive]}
+        onPress={() => setActiveTab(id)}
+      >
+        <Text style={[styles.navItemText, isActive && styles.navItemTextActive]}>
+          {icon} {label}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
-      <ScrollView contentContainerStyle={[styles.content, isLargeScreen && styles.contentDesktop]}>
+      
+      <View style={[styles.layout, isLargeScreen ? styles.layoutRow : styles.layoutColumn]}>
         
-        <View style={styles.header}>
-          <Text style={styles.title}>🃏 Poker Terça</Text>
-          <Text style={styles.subtitle}>Logado como: {userEmail}</Text>
-          <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
-            <Text style={styles.logoutText}>Sair</Text>
-          </TouchableOpacity>
+        {/* SIDEBAR / NAVBAR */}
+        <View style={[styles.sidebar, !isLargeScreen && styles.navbarMobile]}>
+          <View style={styles.sidebarHeader}>
+            <Text style={styles.logo}>🃏 POKER</Text>
+            {isLargeScreen && <Text style={styles.logoSub}>TERÇA</Text>}
+          </View>
+
+          <ScrollView 
+            horizontal={!isLargeScreen} 
+            showsHorizontalScrollIndicator={false}
+            style={styles.navContainer}
+            contentContainerStyle={!isLargeScreen && styles.navContainerMobile}
+          >
+            <NavItem id="partida" icon="♠️" label="Nova Partida" />
+            <NavItem id="ranking" icon="🏆" label="Ranking" />
+            <NavItem id="jogadores" icon="👥" label="Jogadores" />
+          </ScrollView>
+
+          {isLargeScreen && (
+            <View style={styles.sidebarFooter}>
+              <Text style={styles.userEmail}>{userEmail}</Text>
+              <TouchableOpacity onPress={onLogout} style={styles.logoutBtn}>
+                <Text style={styles.logoutText}>Sair</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Status do Sistema</Text>
-          <Text style={styles.statusText}>{status}</Text>
+        {/* MAIN CONTENT */}
+        <View style={styles.mainContent}>
+          {/* Header Mobile para o Logout */}
+          {!isLargeScreen && (
+            <View style={styles.mobileHeader}>
+              <Text style={styles.userEmail}>{userEmail}</Text>
+              <TouchableOpacity onPress={onLogout}>
+                <Text style={styles.logoutText}>Sair</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {renderContent()}
         </View>
 
-        <View style={[styles.menuGrid, isLargeScreen && styles.menuGridDesktop]}>
-          <TouchableOpacity style={styles.menuButton}>
-            <Text style={styles.buttonText}>Nova Partida</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuButton}>
-            <Text style={styles.buttonText}>Jogadores</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuButton}>
-            <Text style={styles.buttonText}>Ranking</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuButton}>
-            <Text style={styles.buttonText}>Histórico</Text>
-          </TouchableOpacity>
-        </View>
-
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -76,82 +103,99 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  content: {
-    padding: theme.spacing.medium,
+  layout: {
+    flex: 1,
+  },
+  layoutRow: {
+    flexDirection: 'row',
+  },
+  layoutColumn: {
+    flexDirection: 'column',
+  },
+  sidebar: {
+    backgroundColor: theme.colors.sidebarBackground,
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  navbarMobile: {
+    borderRightWidth: 0,
+    borderBottomWidth: 1,
+    paddingBottom: 10,
+  },
+  sidebarHeader: {
+    padding: theme.spacing.large,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  contentDesktop: {
-    paddingHorizontal: '10%',
+  logo: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: theme.colors.primary,
+    letterSpacing: 1,
   },
-  header: {
-    marginTop: theme.spacing.xlarge,
-    marginBottom: theme.spacing.large,
-    alignItems: 'center',
+  logoSub: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#fff',
+    letterSpacing: 4,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: theme.colors.textPrimary,
-    marginBottom: 5,
+  navContainer: {
+    flex: 1,
   },
-  subtitle: {
-    fontSize: 16,
+  navContainerMobile: {
+    paddingHorizontal: theme.spacing.medium,
+    gap: 10,
+  },
+  navItem: {
+    paddingVertical: 15,
+    paddingHorizontal: theme.spacing.large,
+    marginVertical: 5,
+    marginHorizontal: 10,
+    borderRadius: theme.borderRadius.medium,
+  },
+  navItemActive: {
+    backgroundColor: theme.colors.primary,
+  },
+  navItemText: {
     color: theme.colors.textSecondary,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  navItemTextActive: {
+    color: theme.colors.textPrimary,
+  },
+  sidebarFooter: {
+    padding: theme.spacing.large,
+    borderTopWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  userEmail: {
+    color: theme.colors.textSecondary,
+    fontSize: 14,
     marginBottom: 10,
   },
-  logoutButton: {
-    padding: 8,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+  logoutBtn: {
+    padding: 10,
+    backgroundColor: theme.colors.cardBackground,
     borderRadius: theme.borderRadius.small,
+    alignItems: 'center',
   },
   logoutText: {
-    color: theme.colors.textSecondary,
-  },
-  card: {
-    width: '100%',
-    maxWidth: 600,
-    backgroundColor: theme.colors.cardBackground,
-    borderRadius: theme.borderRadius.large,
-    padding: theme.spacing.medium,
-    marginBottom: theme.spacing.medium,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 8,
-  },
-  cardTitle: {
-    fontSize: 18,
+    color: theme.colors.error,
     fontWeight: 'bold',
-    color: theme.colors.textPrimary,
-    marginBottom: 10,
   },
-  statusText: {
-    color: theme.colors.success,
-    fontSize: 16,
-  },
-  menuGrid: {
-    width: '100%',
-    maxWidth: 600,
+  mobileHeader: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     justifyContent: 'space-between',
-  },
-  menuGridDesktop: {
-    maxWidth: 800,
-  },
-  menuButton: {
-    width: '48%',
-    backgroundColor: theme.colors.primary,
     padding: theme.spacing.medium,
-    borderRadius: theme.borderRadius.medium,
-    marginBottom: 15,
-    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.cardBackground,
   },
-  buttonText: {
-    color: theme.colors.textPrimary,
-    fontWeight: 'bold',
-    fontSize: 16,
+  mainContent: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
   }
 });
+

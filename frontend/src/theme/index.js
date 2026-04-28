@@ -1,8 +1,10 @@
 export const theme = {
   colors: {
     background: '#0f0f0f',
+    sidebarBackground: '#141414',
     cardBackground: '#1a1a1a',
     primary: '#e53935',
+    primaryHover: '#f44336',
     primaryDisabled: '#7f2b2b',
     textPrimary: '#ffffff',
     textSecondary: '#888888',

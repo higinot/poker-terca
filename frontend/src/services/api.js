@@ -1,11 +1,15 @@
 // Lógica centralizada para detectar a URL da API
 const getApiUrl = () => {
-  const defaultUrl = 'http://localhost:5000';
+  // 1. Se estivermos rodando no Codespaces, tentar achar a URL mapeada.
   if (typeof window !== 'undefined' && window.location.hostname.includes('github.dev')) {
-    // Garante que só vai trocar a porta no final do link (antes do .app.github.dev)
     return `https://${window.location.hostname.replace(/-\d+\.app\.github\.dev/, '-5000.app.github.dev')}`;
   }
-  return defaultUrl;
+  // 2. Se houver uma variável de ambiente do Vercel/Produção (EXPO_PUBLIC_API_URL).
+  if (process.env.EXPO_PUBLIC_API_URL) {
+    return process.env.EXPO_PUBLIC_API_URL;
+  }
+  // 3. Fallback para localhost local.
+  return 'http://localhost:5000';
 };
 
 const API_URL = getApiUrl();

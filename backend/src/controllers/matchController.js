@@ -1,89 +1,102 @@
-// Banco de dados em memória (reseta se o servidor reiniciar)
-let matches = [];
-let nextId = 1;
+const Match = require('../models/Match');
 
-const createMatch = (req, res) => {
+const createMatch = async (req, res) => {
   const { date, creatorEmail } = req.body;
   
   if (!date || !creatorEmail) {
     return res.status(400).json({ success: false, message: 'Data e criador são obrigatórios.' });
   }
 
-  const newMatch = {
-    id: nextId++,
-    date,
-    status: 'OPEN',
-    creator: creatorEmail,
-    players: [creatorEmail], // O criador já entra na mesa automaticamente
-    results: {}, // Armazena { "email@teste.com": 150.50 }
-    createdAt: new Date()
-  };
+  try {
+    const newMatch = await Match.create({
+      date,
+      creator: creatorEmail,
+      players: [creatorEmail],
+      results: {}
+    });
 
-  matches.push(newMatch);
-  res.json({ success: true, message: 'Partida criada com sucesso!', match: newMatch });
+    res.json({ success: true, message: 'Partida criada com sucesso!', match: newMatch });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erro ao criar partida no banco de dados.' });
+  }
 };
 
-const listOpenMatches = (req, res) => {
-  const openMatches = matches.filter(m => m.status === 'OPEN');
-  res.json({ success: true, matches: openMatches });
+const listOpenMatches = async (req, res) => {
+  try {
+    const openMatches = await Match.find({ status: 'OPEN' }).sort({ createdAt: -1 });
+    res.json({ success: true, matches: openMatches });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erro ao listar partidas.' });
+  }
 };
 
-const joinMatch = (req, res) => {
-  const matchId = parseInt(req.params.id);
+const joinMatch = async (req, res) => {
+  const { id } = req.params;
   const { userEmail } = req.body;
 
   if (!userEmail) {
     return res.status(400).json({ success: false, message: 'Email do usuário é obrigatório.' });
   }
 
-  const matchIndex = matches.findIndex(m => m.id === matchId);
-  
-  if (matchIndex === -1) {
-    return res.status(404).json({ success: false, message: 'Partida não encontrada.' });
+  try {
+    const match = await Match.findById(id);
+    
+    if (!match) {
+      return res.status(404).json({ success: false, message: 'Partida não encontrada.' });
+    }
+
+    if (match.players.includes(userEmail)) {
+      return res.status(400).json({ success: false, message: 'Você já está nesta mesa!' });
+    }
+
+    match.players.push(userEmail);
+    await match.save();
+    
+    res.json({ success: true, message: 'Você entrou na partida com sucesso!', match });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erro ao entrar na partida.' });
   }
-
-  const match = matches[matchIndex];
-
-  if (match.players.includes(userEmail)) {
-    return res.status(400).json({ success: false, message: 'Você já está nesta mesa!' });
-  }
-
-  // Adiciona o jogador à mesa
-  match.players.push(userEmail);
-  
-  res.json({ success: true, message: 'Você entrou na partida com sucesso!', match });
 };
 
-const getMatchDetails = (req, res) => {
-  const matchId = parseInt(req.params.id);
-  const match = matches.find(m => m.id === matchId);
+const getMatchDetails = async (req, res) => {
+  const { id } = req.params;
 
-  if (!match) {
-    return res.status(404).json({ success: false, message: 'Partida não encontrada.' });
+  try {
+    const match = await Match.findById(id);
+
+    if (!match) {
+      return res.status(404).json({ success: false, message: 'Partida não encontrada.' });
+    }
+
+    res.json({ success: true, match });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erro ao buscar detalhes da partida.' });
   }
-
-  res.json({ success: true, match });
 };
 
-const submitResult = (req, res) => {
-  const matchId = parseInt(req.params.id);
+const submitResult = async (req, res) => {
+  const { id } = req.params;
   const { userEmail, cashResult } = req.body;
 
-  const matchIndex = matches.findIndex(m => m.id === matchId);
-  if (matchIndex === -1) {
-    return res.status(404).json({ success: false, message: 'Partida não encontrada.' });
+  try {
+    const match = await Match.findById(id);
+    
+    if (!match) {
+      return res.status(404).json({ success: false, message: 'Partida não encontrada.' });
+    }
+
+    if (!match.players.includes(userEmail)) {
+      return res.status(400).json({ success: false, message: 'Você não faz parte desta partida.' });
+    }
+
+    // Registra o resultado em Cash Game
+    match.results.set(userEmail, parseFloat(cashResult));
+    await match.save();
+
+    res.json({ success: true, message: 'Resultado salvo com sucesso!', match });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erro ao salvar resultado.' });
   }
-
-  const match = matches[matchIndex];
-
-  if (!match.players.includes(userEmail)) {
-    return res.status(400).json({ success: false, message: 'Você não faz parte desta partida.' });
-  }
-
-  // Registra o resultado em Cash Game (pode ser positivo ou negativo)
-  match.results[userEmail] = parseFloat(cashResult);
-
-  res.json({ success: true, message: 'Resultado salvo com sucesso!', match });
 };
 
 module.exports = {

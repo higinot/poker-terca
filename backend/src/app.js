@@ -1,7 +1,15 @@
 const express = require('express');
 const cors = require('cors');
+const connectDB = require('./config/database');
 const authRoutes = require('./routes/authRoutes');
 const matchRoutes = require('./routes/matchRoutes');
+
+// Conectar ao Banco de Dados (só funciona se a variável MONGO_URI estiver no .env)
+if (process.env.MONGO_URI) {
+  connectDB();
+} else {
+  console.log('Aviso: MONGO_URI não definida. O banco não conectará automaticamente.');
+}
 
 const app = express();
 
